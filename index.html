@@ -357,7 +357,7 @@ function generateCalendar(currentDate) {
 
     // 오늘 날짜면 [숫자] 표시
     if (d === currentDate.getDate()) {
-      day.textContent = `[ ${d} ]`;
+      day.textContent = `<span style="color: yellow;">[</span> ${d} <span style="color: yellow;">]</span>`;
     } else {
       day.textContent = d;
     }
@@ -397,11 +397,29 @@ function generateCalendar(currentDate) {
 
     // 전체화면
     if (elem.requestFullscreen) {
-      elem.requestFullscreen();
+      elem.requestFullscreen().then(() => {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(err => {
+            console.warn("화면 방향 고정 실패:", err);
+          });
+        }
+      }).catch(err => {
+        console.warn("전체화면 요청 실패:", err);
+      });
     } else if (elem.webkitRequestFullscreen) {
       elem.webkitRequestFullscreen();
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(err => {
+          console.warn("화면 방향 고정 실패:", err);
+        });
+      }
     } else if (elem.msRequestFullscreen) {
       elem.msRequestFullscreen();
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(err => {
+          console.warn("화면 방향 고정 실패:", err);
+        });
+      }
     }
 
     // 화면 꺼짐 방지

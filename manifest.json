@@ -1,8 +1,8 @@
 {
   "name": "PWA Clock",
   "short_name": "Clock",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "/clock/index.html",
+  "scope": "/clock/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",

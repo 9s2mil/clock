@@ -357,7 +357,7 @@ function generateCalendar(currentDate) {
 
     // 오늘 날짜면 [숫자] 표시
     if (d === currentDate.getDate()) {
-      day.textContent = `<span style="color: yellow;">[</span> ${d} <span style="color: yellow;">]</span>`;
+      day.innerHTML = `<span style="color: yellow;">[</span> ${d} <span style="color: yellow;">]</span>`;
     } else {
       day.textContent = d;
     }

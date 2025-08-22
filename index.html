@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.cdnfonts.com/css/ds-digital" rel="stylesheet">
+  <link rel="manifest" href="/clock/manifest.json" />
+
+  <title>Clock</title>
+  <style>
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0B503B;
+  font-family: "DS-Digital", monospace;
+}
+
+#app {
+  display: grid;
+  grid-template-columns: 40% 60%; /* 좌: 시간/날짜, 우: 달력 */
+  width: 100%;
+  height: 100%;
+  font-family: "DS-Digital", monospace;
+}
+#left-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: 10px;
+  color: white;
+  box-sizing: border-box;
+}
+#year-container {
+  height: 20vh;
+  display: flex;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+#monthday-container {
+  display: flex;
+  height: 47vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+#monthday-container > div {
+  display: flex;
+  overflow: hidden;
+  height: 100%;
+  box-sizing: border-box;
+}
+#monthday-container > div:nth-child(1) {
+  width: 10vw;
+}
+#monthday-container > div:nth-child(2) {
+  width: 20vw;
+}
+#monthday-container > div:nth-child(3) {
+  width: 10vw;
+}
+#time-container {
+  display: flex;
+  height: 33vh;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-top: 5px solid white; 
+}
+
+.year {
+  color: white;
+  font-size: 14vh;
+  justify-content: left;
+  align-items: top;
+  margin-left: 1vw;
+}
+.year-text {
+  color: white;
+  font-size: 7vh;
+  margin-left: 1vw;
+  margin-bottom: 7.5vh;
+}
+
+.month {
+  color: white;
+  font-size: 16vh;
+  justify-content: left;
+  align-items: top;
+  margin-left: 3vw;
+}
+.month-text {
+  color: white;
+  font-size: 7vh;
+  margin-left: 0.15vw;
+  margin-bottom: 33vh;
+}
+
+.today {
+  color: white;
+  font-size: 36vh;
+  justify-content: left;
+  align-items: top;
+  margin-left: 3vw;
+}
+.today-text {
+  color: white;
+  font-size: 7vh;
+  margin-left: 0.15vw;
+  margin-bottom: 16.5vh;
+}
+
+.dissweekday {
+  color: white;
+  font-size: 16vh;
+  justify-content: left;
+}
+
+.dissweekday,
+.year-text,
+.month-text,
+.today-text {
+  display: inline-flex;
+  align-items: flex-end;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.time-hour {
+  flex: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-size: 30vh;
+}
+
+.time-second {
+  flex: 2;
+  justify-content: left;
+  overflow: hidden;
+  box-sizing: border-box;
+  color: yellow;
+  font-size: 11vh;
+  display: inline-flex;
+  align-items: flex-end;
+  line-height: 1;
+  margin-bottom: 4vh;
+}
+
+/* 오른쪽: 달력 */
+#right-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-left: 5px solid white; 
+  padding: 0%;
+  margin: 0%;
+}
+
+#calendar-container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 4.1vw;
+  text-align: center;
+}
+
+#calendar-container .day {
+  white-space: nowrap;  
+  min-width: 2em;  
+  text-align: center;
+  color: white;
+  font-family: "DS-Digital", monospace;
+}
+
+/* 요일 헤더 스타일 */
+.weekday {
+  font-weight: bold;
+  text-align: center;
+  color: white;
+  font-family: "DS-Digital", monospace;
+}
+
+/* 일요일 빨강 */
+.weekday:nth-child(1),
+.day.sunday {
+  color: red;
+}
+
+/* 토요일 파랑 */
+.weekday:nth-child(7),
+.day.saturday {
+  color: blue;
+}
+
+#calendar-container .day,
+#calendar-container .weekday {
+  font-size: inherit;
+}
+  </style>
+</head>
+
+<body>
+
+<div id="app">
+  <!-- 왼쪽: 날짜 + 시간 -->
+<div id="left-container">
+  <div id="year-container"></div> <!-- 년도 -->
+  <div id="monthday-container"></div> <!-- 월, 일, 요일 -->
+  <div id="time-container"></div> <!-- 시간 -->
+</div>
+
+  <!-- 오른쪽: 달력 -->
+  <div id="right-container">
+    <div id="calendar-container">
+      <!-- 요일 헤더 추가 -->
+      <div class="weekday">日</div>
+      <div class="weekday">月</div>
+      <div class="weekday">火</div>
+      <div class="weekday">水</div>
+      <div class="weekday">木</div>
+      <div class="weekday">金</div>
+      <div class="weekday">土</div>
+    </div>
+  </div>
+</div>
+
+  <script>
+let wakeLock = null;
+
+  function updateClock() {
+    const now = new Date();
+
+    // === 년도 ===
+    const yearContainer = document.getElementById("year-container");
+    const year = now.getFullYear();
+    yearContainer.innerHTML = `
+    <span class="year">${year}</span><span class="year-text">年</span>
+  `;
+
+    // === 월, 일, 요일 ===
+    const monthdayContainer = document.getElementById("monthday-container");
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    const weekday = ["日", "月", "火", "水", "木", "金", "土"][now.getDay()];
+    monthdayContainer.innerHTML = `
+    <div>
+      <span class="month">${month}</span><span class="month-text">月</span>
+    </div>
+    <div>
+      <span class="today">${day}</span><span class="today-text">日</span>
+    </div>
+    <div>
+      <span class="dissweekday">${weekday}</span>
+    </div>
+  `;
+
+    // === 시간 ===
+    const timeContainer = document.getElementById("time-container");
+    const rawHour = now.getHours();
+    const hour12 = rawHour % 12 || 12; // 12시간제
+    const hour = String(hour12).padStart(2, "0");
+    const minute = String(now.getMinutes()).padStart(2, "0");
+    const second = String(now.getSeconds()).padStart(2, "0");
+
+    timeContainer.innerHTML = `
+    <div class="time-hour">
+      <span class="hour">${hour}:${minute}</span>
+    </div>
+    <div class="time-second">
+      <span class="second">${second}</span>
+    </div>
+  `;
+
+    // === 달력 ===
+    generateCalendar(now);
+  }
+
+setInterval(updateClock, 1000);
+updateClock();
+
+function generateCalendar(currentDate) {
+  const calendar = document.getElementById("calendar-container");
+
+  // 요일 7칸은 남기고 나머지 지움
+  while (calendar.children.length > 7) {
+    calendar.removeChild(calendar.lastChild);
+  }
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDate = new Date(year, month + 1, 0).getDate();
+
+  // 빈칸
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement("div");
+    calendar.appendChild(empty);
+  }
+
+  // 날짜 채우기
+  for (let d = 1; d <= lastDate; d++) {
+    const date = new Date(year, month, d);
+    const day = document.createElement("div");
+
+    // 오늘 날짜면 [숫자] 표시
+    if (d === currentDate.getDate()) {
+      day.textContent = `[ ${d} ]`;
+    } else {
+      day.textContent = d;
+    }
+
+    day.classList.add("day");
+
+    // 일/토 색상
+    if (date.getDay() === 0) {
+      day.classList.add("sunday");
+    } else if (date.getDay() === 6) {
+      day.classList.add("saturday");
+    }
+
+    calendar.appendChild(day);
+  }
+}
+
+// 화면 꺼짐 방지 함수
+  async function enableWakeLock() {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      console.log("화면 꺼짐 방지 활성화됨");
+
+      wakeLock.addEventListener("release", () => {
+        console.warn("Wake Lock 해제됨, 재요청 시도");
+        enableWakeLock(); // ✅ 재요청
+      });
+    } catch (err) {
+      console.error("Wake Lock 오류:", err.name, err.message);
+    }
+  }
+
+
+  // 처음 한 번 클릭 시 전체화면 + 화면꺼짐 방지
+  window.addEventListener("click", () => {
+    const elem = document.documentElement;
+
+    // 전체화면
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+
+    // 화면 꺼짐 방지
+    if ("wakeLock" in navigator) {
+      enableWakeLock();
+    }
+
+  }, { once: true });
+
+  function playSilentAudio() {
+    const audio = new Audio("https://cdn.jsdelivr.net/gh/anars/blank-audio/1-second-of-silence.mp3");
+    audio.loop = true;
+    audio.play().catch(e => console.warn("Audio play error:", e));
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      enableWakeLock();
+    }
+  });
+
+  // 페이지 진입 시 1회 요청
+  enableWakeLock();
+   
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/clock/service-worker.js')
+        .then(reg => console.log("SW 등록 성공:", reg))
+        .catch(err => console.error("SW 등록 실패:", err));
+    }
+  </script>
+</body>
+</html>

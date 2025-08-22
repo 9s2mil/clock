@@ -435,8 +435,8 @@ function generateCalendar(currentDate) {
     let isWhite = false;
 
     // 기존 텍스트 복원
-    const saved = localStorage.getItem("popButtonText");
-    if (saved) popButton.textContent = saved;
+    // const saved = localStorage.getItem("popButtonText");
+    // if (saved) popButton.textContent = saved;
 
     // 토글 버튼 기능
     popButton.addEventListener("click", () => {
@@ -471,7 +471,7 @@ function generateCalendar(currentDate) {
       if (newText) {
         newText = newText.replace(/;/g, "\n"); // ← 세미콜론을 줄바꿈으로
         popButton.textContent = newText;
-        localStorage.setItem("popButtonText", newText);
+        // localStorage.setItem("popButtonText", newText);
       }
       editPopup.style.display = "none";
     });

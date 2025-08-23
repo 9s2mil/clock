@@ -458,13 +458,8 @@ function generateCalendar(currentDate) {
 
     let isWhite = false;
 
-    // 기존 텍스트 복원
-    // const saved = localStorage.getItem("popButtonText");
-    // if (saved) popButton.textContent = saved;
-
     // 토글 버튼 기능
     popButton.addEventListener("click", () => {
-      if (!document.fullscreenElement) return;
       isWhite = !isWhite;
       popButton.style.backgroundColor = isWhite ? "white" : "rgba(0,0,0,0)";
       popButton.style.color = isWhite ? "black" : "rgba(0,0,0,0)";
@@ -473,7 +468,7 @@ function generateCalendar(currentDate) {
     // 길게 눌렀을 때 팝업 오픈
     let pressTimer;
     const startPress = () => {
-      if (!document.fullscreenElement || !isWhite) return;
+      if (!isWhite) return;
       pressTimer = setTimeout(() => {
         textInput.value = popButton.textContent;
         editPopup.style.display = "block";
@@ -513,4 +508,5 @@ function generateCalendar(currentDate) {
 </script>
 
 </body>
+
 </html>

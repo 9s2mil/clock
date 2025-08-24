@@ -221,19 +221,94 @@ html, body {
 }
 .popup {
   position: fixed;
-  top: 40%;
+  top: 0;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
+  transform: translateX(-50%);
+  width: clamp(280px, 50vw, 720px);
+  max-height: min(80dvh, calc(100vh - 12px - env(safe-area-inset-top, 0)));
+  overflow-y: auto;
+  background: #fff;
   border: 1px solid #aaa;
-  padding: 20px;
   z-index: 9999;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  padding: 18px 16px;
+  padding-top: calc(18px + env(safe-area-inset-top, 0));
+}
+
+
+/* 버튼 영역 */
+.popup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* 버튼 기본 베이스 */
+.popup-actions button {
+  appearance: none;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: transform .06s ease, box-shadow .18s ease, opacity .18s ease;
+  box-shadow: 0 2px 0 rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.12);
+}
+.popup-actions button:active { transform: translateY(1px); }
+
+/* 각 버튼 톤 */
+#confirmText {
+  background: #0B503B; /* 배경색과 톤을 맞춘 딥그린 */
+  color: #fff;
+}
+#confirmText:hover { box-shadow: 0 3px 0 rgba(0,0,0,.25), 0 12px 20px rgba(11,80,59,.28); }
+
+#cancelText {
+  background: #E9ECEF;
+  color: #333;
+}
+#cancelText:hover { box-shadow: 0 3px 0 rgba(0,0,0,.2), 0 10px 18px rgba(0,0,0,.14); }
+
+#restoreText {
+  background: #FFE08C; /* 주의/복원 느낌의 웜 톤 */
+  color: #5A3D00;
+}
+#restoreText:hover { box-shadow: 0 3px 0 rgba(0,0,0,.2), 0 10px 18px rgba(255,224,140,.25); }
+
+/* 포커스 링 (접근성) */
+.popup-actions button:focus {
+  outline: 2px solid rgba(11,80,59,.65);
+  outline-offset: 2px;
+}
+
+/* 입력창 폭/라인높이 보정(필요시) */
+#textInput {
+  width: 100%;
+  line-height: 1.3;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
 }
 
 .popup-inner {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  align-items: center;
+}
+/* 투명 100% 스크림: 뒤는 보이되 터치는 차단 */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0); /* 완전 투명 */
+  z-index: 9888;             /* 요청하신 값 */
+  pointer-events: auto;       /* 아래 요소 클릭 차단용 */
+}
+.cleatText {
+  color: rgba(0,0,0,0);
 }
   </style>
 </head>
@@ -272,15 +347,24 @@ html, body {
     <h4>전도요원 신청자 명단</h4>
     태성광 집사, 정경숙 집사, 문순금 목사,<br>
     정은숙 권사, 주선희 집사, 류기하 권사,<br>
-    김복자 집사<br><br>
+    김복자 집사, 이은숙 집사, 전지혜 집사,<br>
+    박경미 집사<span class="cleatText">, 이은숙 집사, 전지혜 집사,</span><br>
+    s<br>
   </button>
 
-  <div id="editPopup" style="display:none;" class="popup">
-    <div class="popup-inner">
-      <input type="text" id="textInput" placeholder="광고 내용 변경" />
+<div id="scrim" class="scrim" style="display:none;"></div>
+  
+<div id="editPopup" style="display:none;" class="popup">
+  <div class="popup-inner">
+    <input type="text" id="textInput" placeholder="광고 내용 변경" />
+    <div class="popup-actions">
       <button id="confirmText">확인</button>
+      <button id="cancelText" type="button">취소</button>
+      <button id="restoreText" type="button">복원</button>
     </div>
   </div>
+</div>
+
 
   <script>
 let wakeLock = null;
@@ -455,46 +539,72 @@ function generateCalendar(currentDate) {
     const editPopup = document.getElementById("editPopup");
     const textInput = document.getElementById("textInput");
     const confirmText = document.getElementById("confirmText");
+    const cancelText = document.getElementById("cancelText");
+    const restoreText = document.getElementById("restoreText");
+    const scrim = document.getElementById("scrim");
 
     let isWhite = false;
+    const defaultHTML = popButton.innerHTML;
 
-    // 토글 버튼 기능
+    const saved = localStorage.getItem("popButtonText");
+    if (saved) popButton.textContent = saved;
+
     popButton.addEventListener("click", () => {
       isWhite = !isWhite;
       popButton.style.backgroundColor = isWhite ? "white" : "rgba(0,0,0,0)";
       popButton.style.color = isWhite ? "black" : "rgba(0,0,0,0)";
     });
 
-    // 길게 눌렀을 때 팝업 오픈
+    /* 길게 눌러 편집 열기 */
     let pressTimer;
+    const openPopup = () => {
+      editPopup.style.display = "block";
+      if (scrim) scrim.style.display = "block"; 
+      textInput.focus();
+    };
+    const closePopup = () => {
+      editPopup.style.display = "none";
+      if (scrim) scrim.style.display = "none";  
+    };
+
     const startPress = () => {
       if (!isWhite) return;
       pressTimer = setTimeout(() => {
         textInput.value = popButton.textContent;
-        editPopup.style.display = "block";
-        textInput.focus();
-      }, 1500); // 1.5초로 단축해도 됨
+        openPopup();
+      }, 1500);
     };
     const cancelPress = () => clearTimeout(pressTimer);
 
-    // 마우스 & 터치 이벤트 모두 대응
     popButton.addEventListener("mousedown", startPress);
     popButton.addEventListener("mouseup", cancelPress);
     popButton.addEventListener("mouseleave", cancelPress);
     popButton.addEventListener("touchstart", startPress);
     popButton.addEventListener("touchend", cancelPress);
 
-    // 텍스트 확인
+    /* 확인(저장) */
     confirmText.addEventListener("click", () => {
       let newText = textInput.value.trim();
       if (newText) {
-        newText = newText.replace(/;/g, "\n"); // ← 세미콜론을 줄바꿈으로
+        newText = newText.replace(/;/g, "\n");
         popButton.textContent = newText;
-        // localStorage.setItem("popButtonText", newText);
+        localStorage.setItem("popButtonText", newText);
       }
-      editPopup.style.display = "none";
+      closePopup(); 
     });
 
+    /* 취소 */
+    cancelText.addEventListener("click", () => {
+      closePopup(); 
+    });
+
+    /* 복원 */
+    restoreText.addEventListener("click", () => {
+      popButton.innerHTML = defaultHTML;
+      textInput.value = "";
+      localStorage.removeItem("popButtonText");
+      closePopup(); 
+    });
   });
 
 </script>

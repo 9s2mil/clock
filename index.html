@@ -219,6 +219,7 @@ html, body {
   line-height: 1.0;
   overflow-y: scroll;
 }
+
 .popup {
   position: fixed;
   top: 0;
@@ -236,14 +237,21 @@ html, body {
   padding-top: calc(18px + env(safe-area-inset-top, 0));
 }
 
-
 /* 버튼 영역 */
+/* 한 줄 유지 */
 .popup-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;    /* ↩ wrap 금지 */
   gap: 10px;
-  margin-top: 6px;
 }
+
+/* clearButton: 자리만 유지, 보이지 않음, 클릭 불가 */
+.clearButton {
+  visibility: hidden;   /* 렌더만 숨김, 공간은 차지 */
+  pointer-events: none; /* 클릭/터치 차단 */
+  opacity: 0;           /* (가드) 완전 투명 */
+}
+
 
 /* 버튼 기본 베이스 */
 .popup-actions button {
@@ -258,6 +266,7 @@ html, body {
   box-shadow: 0 2px 0 rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.12);
 }
 .popup-actions button:active { transform: translateY(1px); }
+
 
 /* 각 버튼 톤 */
 #confirmText {
@@ -303,13 +312,70 @@ html, body {
 .scrim {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0); /* 완전 투명 */
-  z-index: 9888;             /* 요청하신 값 */
-  pointer-events: auto;       /* 아래 요소 클릭 차단용 */
+  background: rgba(0,0,0,0); 
+  z-index: 9888; 
+  pointer-events: auto; 
 }
-.cleatText {
+.clearText {
   color: rgba(0,0,0,0);
 }
+/* 왼쪽 영역에 붙는 스크린 */
+.screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 40vw;
+  height: 67vh;
+  z-index: 9890; 
+  display: none;
+  background-color: #fff;
+  overflow: hidden;
+}
+/* 스크린 닫기 버튼 */
+.screen-close {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2; 
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+@media (pointer: coarse) {
+  .screen-close { padding: 10px 14px; font-size: 16px; }
+}
+/* 시작 버튼: 하단 밀착 */
+.screen .sh-start {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 15vh; 
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2em;
+  border: 0; border-radius: 0;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* 단계 표시 영역: 시작 버튼 위 영역을 꽉 채움 */
+.screen .sh-area {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  bottom: 8vh;           /* sh-start 높이와 동일하게 맞춤 */
+  display: none;         /* 시작 전에는 숨김 */
+  align-items: center; justify-content: center;
+  text-align: center;
+  color: #000;           /* 배경색에 따라 가독성 필요 시 조정 */
+  font-weight: 700;
+  font-size: 3em;
+  padding: 2vh;
+}
+
   </style>
 </head>
 
@@ -348,7 +414,7 @@ html, body {
     태성광 집사, 정경숙 집사, 문순금 목사,<br>
     정은숙 권사, 주선희 집사, 류기하 권사,<br>
     김복자 집사, 이은숙 집사, 전지혜 집사,<br>
-    박경미 집사<span class="cleatText">, 이은숙 집사, 전지혜 집사,</span><br>
+    박경미 집사<span class="clearText">, 이은숙 집사, 전지혜 집사,</span><br>
     s<br>
   </button>
 
@@ -358,9 +424,15 @@ html, body {
   <div class="popup-inner">
     <input type="text" id="textInput" placeholder="광고 내용 변경" />
     <div class="popup-actions">
-      <button id="confirmText">확인</button>
+      <button id="waterScreenBtn" type="button">🚿</button>
+      <button class="clearButton" type="button"></button>
+      <button class="clearButton" type="button"></button>
       <button id="cancelText" type="button">취소</button>
+      <button id="confirmText">확인</button>
       <button id="restoreText" type="button">복원</button>
+      <button class="clearButton" type="button"></button>
+      <button class="clearButton" type="button"></button>
+      <button class="clearButton" type="button"></button>
     </div>
   </div>
 </div>
@@ -606,6 +678,156 @@ function generateCalendar(currentDate) {
       closePopup(); 
     });
   });
+
+  const waterScreenBtn = document.getElementById('waterScreenBtn');
+  if (waterScreenBtn) {
+    waterScreenBtn.addEventListener('click', () => {
+      closeVisiblePopups(); // 1) 팝업 먼저 닫기 (+ scrim 숨김)
+      openScreen();         // 2) 스크린 열기 (기존 구현 그대로)
+    });
+  }
+
+  // ── 공용: 스크린/닫기 버튼 보장 ─────────────────────────────
+  function ensureScreen() {
+    let screen = document.querySelector(".screen");
+    if (!screen) {
+      screen = document.createElement("div");
+      screen.className = "screen";
+      document.body.appendChild(screen);
+    }
+    // 좌상단 닫기 버튼 보장
+    let closeBtn = screen.querySelector(".screen-close");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.className = "screen-close";
+      closeBtn.setAttribute("aria-label", "스크린 닫기");
+      closeBtn.textContent = "✕";
+      closeBtn.addEventListener("click", () => {
+        // 인터벌 정리 후 닫기
+        if (screen._shower?.stepInterval) clearInterval(screen._shower.stepInterval);
+        screen.style.display = "none";
+        screen.style.backgroundColor = ""; // 배경 초기화
+      });
+      screen.appendChild(closeBtn);
+    }
+    return screen;
+  }
+
+  function ensureShowerTimerMounted(screen) {
+    // 이미 마운트되어 있으면 재사용
+    if (screen._shower && screen.querySelector(".sh-start")) return;
+
+    // 시작 버튼(하단 밀착)
+    const startBtn = document.createElement("button");
+    startBtn.className = "sh-start";
+    startBtn.textContent = "시작";
+    screen.appendChild(startBtn);
+
+    // 단계 표시 영역(시작 버튼 위 전체)
+    const area = document.createElement("div");
+    area.className = "sh-area";
+    screen.appendChild(area);
+
+    // 단계 정의 (원본과 동일)
+    const steps = [
+      { text: '물 묻히기', duration: 60, color: '#FFB3BA' },
+      { text: '샴푸', duration: 60, color: '#FFDFBA' },
+      { text: '바디워시', duration: 60, color: '#FFFFBA' },
+      { text: '헹구기', duration: 120, color: '#BAFFC9' },
+      { text: '클렌징폼', duration: 60, color: '#BAE1FF' },
+      { text: '물기제거', duration: 180, color: '#CBAAFF' },
+      { text: '환복', duration: 60, color: '#FFC1FF' },
+    ];
+
+    // 상태 저장
+    const sh = {
+      currentStep: 0,
+      stepInterval: null,
+      area,
+      startBtn,
+      screen,
+    };
+    screen._shower = sh;
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = String(seconds % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function resetToInitialState() {
+      if (sh.stepInterval) clearInterval(sh.stepInterval);
+      sh.currentStep = 0;
+      sh.area.style.display = "none";
+      sh.area.innerHTML = "";
+      sh.screen.style.backgroundColor = ""; // 전체 배경 초기화
+      sh.startBtn.disabled = false;
+    }
+
+    function runStep(index) {
+      if (index >= steps.length) { resetToInitialState(); return; }
+
+      const step = steps[index];
+      // ✅ 배경색을 .screen 전체에 적용
+      sh.screen.style.backgroundColor = step.color;
+
+      sh.area.style.display = "flex";
+      sh.area.innerHTML = `
+      <div>
+        <div style="margin-bottom: 3vh;">${step.text}</div>
+        <div id="sh-timer" style="margin-top:3vh;">${formatTime(step.duration)}</div>
+      </div>
+    `;
+
+      let timeLeft = step.duration;
+      if (sh.stepInterval) clearInterval(sh.stepInterval);
+      sh.stepInterval = setInterval(() => {
+        timeLeft--;
+        const t = sh.area.querySelector("#sh-timer");
+        if (t) t.textContent = formatTime(timeLeft);
+        if (timeLeft <= 0) {
+          clearInterval(sh.stepInterval);
+          sh.currentStep++;
+          runStep(sh.currentStep);
+        }
+      }, 1000);
+    }
+
+    function startSequence() {
+      // 중복 시작 방지(원하면 삭제 가능)
+      sh.startBtn.disabled = true;
+      sh.currentStep = 0;
+      runStep(sh.currentStep);
+    }
+
+    sh.startBtn.addEventListener("click", startSequence);
+  }
+
+  function openScreen() {
+    const screen = ensureScreen();
+    ensureShowerTimerMounted(screen);
+    screen.style.display = "block";
+  }
+
+  function closeVisiblePopups() {
+    const popups = document.querySelectorAll('.popup');
+    let closedAny = false;
+
+    popups.forEach(p => {
+      const disp = getComputedStyle(p).display;
+      if (disp !== 'none') {
+        p.style.display = 'none';
+        closedAny = true;
+      }
+    });
+
+    // 팝업이 하나라도 닫혔다면 scrim도 숨김
+    if (closedAny) {
+      const scrim = document.getElementById('scrim');
+      if (scrim) scrim.style.display = 'none';
+    }
+  }
 
 </script>
 

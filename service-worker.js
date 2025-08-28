@@ -3,7 +3,11 @@ const CACHE_NAME = "clock-cache-v20250821";
 const ASSETS_TO_CACHE = [
   "index.html",
   "manifest.json",
-  "service-worker.js"
+  "service-worker.js",
+  "clock.css",
+  "clock.js",
+  "i192.png",
+  "i512.png"
 ];
 
 self.addEventListener("install", (event) => {

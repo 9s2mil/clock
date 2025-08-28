@@ -458,3 +458,13 @@ body {
     background: #fff;
     transition: width .25s ease;
 }
+
+#battery #batText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    color: black;
+    font-weight: bold;
+}

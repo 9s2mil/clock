@@ -190,11 +190,21 @@ const box = document.getElementById('battery');
     const txt  = box.querySelector('#batText');
 
     function render() {
-    const pct = Math.round(b.level * 100);
-    fill.style.setProperty('--level', `${pct}%`);
-    txt.textContent = b.charging ? `${pct}% ⚡` : `${pct}%`;
-    box.style.display = 'flex';
+        const pct = Math.round(b.level * 100);
+        fill.style.setProperty('--level', `${pct}%`);
+        txt.textContent = b.charging ? `${pct}% ⚡` : `${pct}%`;
+        box.style.display = 'flex';
+
+        // 색상 조건
+        if (pct <= 20) {
+            fill.style.background = "red";      // 20% 이하 빨강
+        } else if (pct <= 45) {
+            fill.style.background = "yellow";   // 45% 이하 노랑
+        } else {
+            fill.style.background = "white";    // 기본 흰색
+        }
     }
+
     render();
     b.addEventListener('levelchange', render);
     b.addEventListener('chargingchange', render);

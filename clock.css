@@ -159,7 +159,7 @@ body {
 #right-container {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: top;
     border-left: 5px solid white;
     padding: 2% 0;
     margin: 0%;
@@ -419,26 +419,21 @@ body {
 /* 배터리 위젯 */
 #battery {
     position: absolute;
-    /* 기존 fixed → absolute */
     top: 8px;
-    /* 필요시 조정 */
     right: 8px;
-    /* “왼쪽 컨테이너의 오른쪽 끝” */
     display: none;
-    /* JS에서 flex로 변경 */
     align-items: center;
     gap: 6px;
     color: #fff;
-    font-size: 2.2vh;
+    font-size: 3vh;
     z-index: 10;
-    /* 컨테이너 내부면 10 정도로 충분 */
     opacity: .9;
     user-select: none;
 }
 
 #battery .bat {
     position: relative;
-    width: 42px;
+    width: 35px;
     height: 18px;
     border: 2px solid #fff;
     border-radius: 3px;
@@ -446,13 +441,12 @@ body {
 }
 
 #battery .bat::after {
-    /* +극 돌기 */
     content: "";
     position: absolute;
     right: -4px;
     top: 4px;
     width: 4px;
-    height: 10px;
+    height: 5px;
     background: #fff;
     border-radius: 1px;
 }

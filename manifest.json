@@ -1,4 +1,5 @@
 {
+  "id": "Clock",
   "name": "Clock",
   "short_name": "Clock",
   "start_url": "/clock/index.html",

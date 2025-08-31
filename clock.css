@@ -468,3 +468,12 @@ body {
     color: black;
     font-weight: bold;
 }
+
+h3 {
+    margin-top: -3vh;
+    margin-bottom: -1vh;
+}
+
+h5 {
+    margin-bottom: -2vh;
+}

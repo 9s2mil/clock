@@ -350,13 +350,14 @@ screen.appendChild(area);
 
 // 단계 정의 (원본과 동일)
 const steps = [
-    { text: '물 묻히기', duration: 60, color: '#FFB3BA' },
+    { text: '샤워 준비', duration: 30, color: '#aaaaaa' },
+    { text: '물 묻히기', duration: 80, color: '#FFB3BA' },
     { text: '샴푸', duration: 60, color: '#FFDFBA' },
-    { text: '바디워시', duration: 60, color: '#FFFFBA' },
-    { text: '헹구기', duration: 120, color: '#BAFFC9' },
-    { text: '클렌징폼', duration: 60, color: '#BAE1FF' },
-    { text: '물기제거', duration: 180, color: '#CBAAFF' },
-    { text: '환복', duration: 60, color: '#FFC1FF' },
+    { text: '바디워시', duration: 100, color: '#FFFFBA' },
+    { text: '클렌징폼', duration: 60, color: '#BAFFC9' },
+    { text: '헹구기', duration: 150, color: '#BAE1FF' },
+    { text: '물기제거', duration: 300, color: '#CBAAFF' },
+    { text: '환복', duration: 120, color: '#FFC1FF' },
 ];
 
 // 상태 저장
